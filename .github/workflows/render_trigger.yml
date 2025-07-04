@@ -2,7 +2,7 @@ name: Trigger Render Daily
 
 on:
   schedule:
-    - cron: '30 13 * * 1-5'  # हर Monday tno Friday, शाम 7:00 बजे. IST
+    - cron: '30 11 * * 1-5'  # हर Monday tno Friday, शाम 7:00 बजे. IST
   workflow_dispatch:
 
 jobs:
