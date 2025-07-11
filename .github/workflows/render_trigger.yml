@@ -2,13 +2,28 @@ name: Trigger Render Daily
 
 on:
   schedule:
-    - cron: '30 11 * * 1-5'  # हर Mondaay tno Friday., शाम 5:00 बजे. IST
+    - cron: '30 11 * * 1-5'  # सोमवार से शुक्रवार, शाम 5:00 बजे IST
   workflow_dispatch:
 
 jobs:
   trigger_render:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render Webhook
+      - name: Install jq (JSON parser)
+        run: sudo apt-get install jq
+
+      - name: Trigger Render Webhook and wait for correct response
         run: |
-          curl -X GET "https://screener-scraper.onrender.com/run"
+          echo "🔃 Calling /run endpoint..."
+          response=$(curl -s "https://screener-scraper.onrender.com/run")
+
+          echo "🔎 Response received: $response"
+
+          status=$(echo "$response" | jq -r '.status')
+
+          if [ "$status" = "🟢 Scraper started in background." ]; then
+            echo "✅ Scraper has started successfully!"
+          else
+            echo "❌ Unexpected response. Status: $status"
+            exit 1
+          fi
