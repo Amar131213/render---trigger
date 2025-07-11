@@ -2,35 +2,24 @@ name: Trigger Render Daily
 
 on:
   schedule:
-    - cron: '30 11 * * 1-5'  # सोमवार से शुक्रवार, IST 5:00 PM
+    - cron: '30 11 * * 1-5'  # सोमवार से शुक्रवार, शाम 5 बजे IST
   workflow_dispatch:
 
 jobs:
   trigger_render:
     runs-on: ubuntu-latest
     steps:
-      - name: Install jq (JSON parser)
-        run: sudo apt-get install -y jq
-
-      - name: Trigger Render Webhook and wait for correct response
+      - name: Call Render and Wait for Exact Response
         run: |
-          echo "🔃 Calling /run endpoint..."
-          response=$(curl -s "https://screener-scraper.onrender.com/run")
+          echo "Calling Render /run endpoint..."
+          RESPONSE=$(curl -s --max-time 90 "https://screener-scraper.onrender.com/run")
+          echo "Response received: $RESPONSE"
 
-          echo "📦 Raw response: $response"
+          EXPECTED='{"status":"🟢 Scraper started in background."}'
 
-          # Check if response is valid JSON
-          if echo "$response" | jq empty > /dev/null 2>&1; then
-            status=$(echo "$response" | jq -r '.status // empty')
-            echo "🧪 Extracted status: $status"
-
-            if [[ "$status" == "🟢 Scraper started in background." || "$status" == "⚠️ Already running" ]]; then
-              echo "✅ Scraper started or already running"
-            else
-              echo "❌ Unexpected status: $status"
-              exit 1
-            fi
+          if [[ "$RESPONSE" == "$EXPECTED" ]]; then
+            echo "✅ Expected response received."
           else
-            echo "❌ Not a valid JSON response. Possibly rate-limited or Render error."
+            echo "❌ Unexpected response. Exiting with error."
             exit 1
           fi
