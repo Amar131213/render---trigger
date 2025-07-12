@@ -1,21 +1,15 @@
-name: Trigger Render Daily
+name: Trigger Render Scraper
 
 on:
   schedule:
-    - cron: '30 11 * * 1-5'  # हर सोमवार से शुक्रवार, शाम 5:00 बजे IST
-  workflow_dispatch:
+    - cron: '30 11 * * 1-5'  # ⏰ सोमवार से शुक्रवार, शाम 5:00 IST (11:30 UTC)
+  workflow_dispatch:         # 🔘 Manual run का भी option
 
 jobs:
-  trigger_render:
+  call_scraper:
     runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Render Webhook
-        run: |
-          echo "🔔 Triggering Render Webhook..."
-          curl -X GET "https://screener-scraper.onrender.com/run"
 
-      - name: Wait for 5 minutes
+    steps:
+      - name: Trigger /run endpoint on Render
         run: |
-          echo "⏳ Waiting for 5 minutes to let scraper start..."
-          sleep 300  # 300 seconds = 5 minutes
-          echo "✅ Wait complete. Assuming scraper has started."
+          curl -X GET "https://screener-scraper.onrender.com/run"
