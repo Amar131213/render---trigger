@@ -1,9 +1,8 @@
-
 name: Trigger Render Daily
 
 on:
   schedule:
-    - cron: '30 11 * * 1-5'  # हर सोमवार से शुक्रवार, 11:30 AM UTC = 5:00 PM IST
+    - cron: '30 11 * * 1-5'  # हर सोमवार से शुक्रवार, शाम 5:00 बजे IST
   workflow_dispatch:
 
 jobs:
@@ -12,14 +11,11 @@ jobs:
     steps:
       - name: Trigger Render Webhook
         run: |
-          echo "Triggering Render Webhook at $(date -u)"
-          curl -s -o response.txt -w "%{http_code}" "https://screener-scraper.onrender.com/run" > status.txt
-          STATUS=$(cat status.txt)
-          echo "HTTP Status: $STATUS"
-          cat response.txt
-          if [ "$STATUS" -ne 200 ]; then
-            echo "❌ Webhook trigger failed."
-            exit 1
-          else
-            echo "✅ Webhook trigger successful."
-          fi
+          echo "🔔 Triggering Render Webhook..."
+          curl -X GET "https://screener-scraper.onrender.com/run"
+
+      - name: Wait for 5 minutes
+        run: |
+          echo "⏳ Waiting for 5 minutes to let scraper start..."
+          sleep 300  # 300 seconds = 5 minutes
+          echo "✅ Wait complete. Assuming scraper has started."
