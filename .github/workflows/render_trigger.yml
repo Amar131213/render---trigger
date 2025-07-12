@@ -1,37 +1,18 @@
-name: Trigger Render Daily
+name: Debug Render Response
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '30 11 * * 1-5'  # सोमवार से शुक्रवार शाम 5 बजे IST
 
 jobs:
-  trigger_render:
+  debug_render:
     runs-on: ubuntu-latest
     steps:
-      - name: ⏳ Wait for 200 OK from Render (Max 5 min)
+      - name: 🧐 Call Render and print full response
         run: |
-          echo "🚀 Triggering Render and waiting until 200 OK..."
-
-          start_time=$(date +%s)
-          timeout=$((5 * 60))  # 5 minutes in seconds
-
-          while true; do
-            response=$(curl -s -o /dev/null -w "%{http_code}" https://screener-scraper.onrender.com/run)
-
-            if [ "$response" -eq 200 ]; then
-              echo "✅ Success! Got 200 OK"
-              break
-            fi
-
-            now=$(date +%s)
-            elapsed=$((now - start_time))
-
-            if [ "$elapsed" -ge "$timeout" ]; then
-              echo "❌ Timeout! Did not receive 200 OK in 5 minutes."
-              exit 1
-            fi
-
-            echo "🔁 Got $response. Retrying in 5s... (Elapsed: ${elapsed}s)"
-            sleep 5
-          done
+          echo "🚀 Calling https://screener-scraper.onrender.com/run ..."
+          
+          echo -e "\n====================== RESPONSE START ======================\n"
+          
+          curl -i -v https://screener-scraper.onrender.com/run
+          
+          echo -e "\n====================== RESPONSE END ======================\n"
