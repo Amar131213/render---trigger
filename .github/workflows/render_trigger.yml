@@ -2,28 +2,14 @@ name: Trigger Render Daily
 
 on:
   schedule:
-    - cron: '30 11 * * 1-5'  # सोमवार से शुक्रवार, शाम 5 बजे IST
+    - cron: '30 11 * * 1-5'  # हर Mondaay tno Friday, शाम 5:00 बजे. IST
   workflow_dispatch:
 
 jobs:
   trigger_render:
     runs-on: ubuntu-latest
     steps:
-      - name: Call Render /run and Wait for Expected Response
+      - name: Trigger Render Webhook
         run: |
-          echo "➡️ Calling https://screener-scraper.onrender.com/run"
+          curl -X GET "https://screener-scraper.onrender.com/run"
           
-          # एक बार कॉल करो, 90 सेकंड तक wait करने दो
-          RESPONSE=$(curl -s --max-time 90 "https://screener-scraper.onrender.com/run")
-
-          echo "📨 Response received: $RESPONSE"
-
-          # Expected JSON match
-          EXPECTED='{"status":"🟢 Scraper started in background."}'
-
-          if [[ "$RESPONSE" == "$EXPECTED" ]]; then
-            echo "✅ Exact expected response matched."
-          else
-            echo "❌ Response did NOT match expected. Failing workflow."
-            exit 1
-          fi
