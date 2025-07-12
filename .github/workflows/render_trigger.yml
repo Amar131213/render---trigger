@@ -2,7 +2,7 @@ name: Trigger Render Scraper
 
 on:
   schedule:
-    - cron: '30 11 * * 1-5'  # सोमवार से शुक्रवार शाम 5:00 IST
+    - cron: '30 11 * * 1-5'
   workflow_dispatch:
 
 jobs:
@@ -10,49 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger Render Webhook with 2-minute wait per try
+      - name: Trigger Render Once and Wait 2 Minutes
         run: |
-          echo "🚀 Triggering Render /run endpoint with 2-min wait per attempt..."
+          echo "🚀 Triggering Render /run endpoint and waiting full 2 minutes..."
 
-          MAX_RETRIES=5
-          RETRY_DELAY=60  # seconds between retries
-          COUNT=0
-          SUCCESS=false
+          RESPONSE=$(curl -v --connect-timeout 30 --max-time 120 \
+            -s -w "\n\nHTTP_CODE:%{http_code}\n⏱️ Time Taken: %{time_total}s\n" \
+            https://screener-scraper.onrender.com/run 2>&1)
 
-          while [ $COUNT -lt $MAX_RETRIES ]; do
-            echo "🔁 Attempt $((COUNT+1)) (waiting up to 2 minutes for response)..."
+          echo "🧾 FULL RESPONSE:"
+          echo "$RESPONSE"
 
-            # Run curl and wait max 120 seconds for full response
-            RESPONSE=$(curl --connect-timeout 30 --max-time 120 \
-              -s -w "\n\nHTTP_CODE:%{http_code}\n⏱️ Time Taken: %{time_total}s\n" \
-              https://screener-scraper.onrender.com/run)
+          echo "$RESPONSE" | grep -q "🟢 Scraper started in background." && {
+            echo "✅ Success: Scraper started"
+            exit 0
+          }
 
-            echo "$RESPONSE"
-
-            # Extract HTTP code
-            HTTP_CODE=$(echo "$RESPONSE" | grep HTTP_CODE | cut -d ":" -f2)
-
-            # Check for expected response
-            echo "$RESPONSE" | grep -q "🟢 Scraper started in background." && {
-              echo "✅ Render scraper started successfully."
-              SUCCESS=true
-              break
-            }
-
-            # Handle known response errors
-            if [ "$HTTP_CODE" = "429" ]; then
-              echo "⚠️ 429 Too Many Requests. Waiting ${RETRY_DELAY}s before retry..."
-            elif [ "$HTTP_CODE" = "503" ]; then
-              echo "⚠️ 503 Service Unavailable. Render is cold starting. Retrying..."
-            else
-              echo "❌ Unexpected response (HTTP $HTTP_CODE). Retrying..."
-            fi
-
-            COUNT=$((COUNT+1))
-            sleep $RETRY_DELAY
-          done
-
-          if [ "$SUCCESS" = false ]; then
-            echo "❌ All retry attempts failed. Render did not respond correctly."
-            exit 1
-          fi
+          echo "⚠️ Warning: Expected message not found in response."
+          exit 1
