@@ -2,7 +2,7 @@ name: Debug Render Response
 
 on:
   schedule:
-    - cron: '30 11 * * *'   # रोज शाम 5:00 बजे IST (India Time = UTC+5:30)
+    - cron: '30 11 * * 1-5'  # सोम–शुक्र, शाम 5:00 बजे IST (11:30 AM UTC)
   workflow_dispatch:
 
 jobs:
